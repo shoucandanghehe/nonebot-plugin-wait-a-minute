@@ -16,7 +16,12 @@ build-backend = 'pdm.backend'
 distribution = true
 
 [tool.pdm.dev-dependencies]
-dev = ['nonebot2[all]>=2.3.2', 'ruff>=0.6.1', 'mypy>=1.11.1']
+dev = [
+    'nonebot2[all]>=2.3.2',
+    'ruff>=0.6.1',
+    'mypy>=1.11.1',
+    "nonebot-adapter-onebot>=2.4.4",
+]
 
 [tool.ruff]
 line-length = 120
