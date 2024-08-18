@@ -3,7 +3,6 @@ from __future__ import annotations
 import signal
 from asyncio import Task, gather, get_event_loop
 from enum import Enum, auto
-from threading import Lock
 from types import FrameType
 from typing import Any, Callable, ClassVar, Optional, TypeVar
 
@@ -40,8 +39,7 @@ class Hook:
     status: Status = Status.NOT_RUNNING_YET
     funcs: ClassVar[list[Callable[[], Any]]] = []
     tasks: ClassVar[list[Task]] = []
-    callback: Task
-    lock: Lock = Lock()
+    callback: Task | None = None
 
     @classmethod
     def register(cls, func: Callable[[], T]) -> Callable[[], T]:
@@ -51,24 +49,23 @@ class Hook:
     @classmethod
     def sig_handle(cls, original_handle: signal._HANDLER) -> SigHandleFunc:
         def inner(signum: int, frame: FrameType | None) -> None:  # noqa: ARG001
-            with cls.lock:
-                if not cls.funcs:
-                    cls.status = Status.FINISHED
+            if not cls.funcs:
+                cls.status = Status.FINISHED
 
-                if cls.status == Status.NOT_RUNNING_YET:
-                    loop = get_event_loop()
-                    for i in cls.funcs:
-                        if is_coroutine_callable(i):
-                            cls.tasks.append(loop.create_task(i()))
-                        else:
-                            cls.tasks.append(loop.create_task(run_sync(i())()))
-                    cls.status = Status.RUNNING
-                    cls.callback = loop.create_task(cls.check_task(signum))
-                elif cls.status == Status.RUNNING:
-                    logger.warning(f'signal {signum} received, but wait a minute pls')
-                elif cls.status == Status.FINISHED:
-                    signal.signal(signum, original_handle)
-                    signal.raise_signal(signum)
+            if cls.status == Status.NOT_RUNNING_YET:
+                cls.status = Status.RUNNING
+                loop = get_event_loop()
+                for i in cls.funcs:
+                    if is_coroutine_callable(i):
+                        cls.tasks.append(loop.create_task(i()))
+                    else:
+                        cls.tasks.append(loop.create_task(run_sync(i)()))
+                cls.callback = loop.create_task(cls.check_task(signum))
+            elif cls.status == Status.RUNNING:
+                logger.warning(f'signal {signum} received, but wait a minute pls')
+            elif cls.status == Status.FINISHED:
+                signal.signal(signum, original_handle)
+                signal.raise_signal(signum)
 
         return inner
 
