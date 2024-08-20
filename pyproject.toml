@@ -1,6 +1,6 @@
 [project]
 name = 'nonebot-plugin-wait-a-minute'
-version = '0.2.0'
+version = '0.2.1'
 description = 'A nonebot plugin for running some func before closing the bot'
 authors = [{ name = 'shoucandanghehe', email = 'wallfjjd@gmail.com' }]
 dependencies = ['nonebot2>=2.3.2']
