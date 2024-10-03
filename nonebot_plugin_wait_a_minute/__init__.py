@@ -8,6 +8,7 @@ from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Optional, TypeVar
 
 from nonebot import get_driver
+from nonebot.consts import WINDOWS
 from nonebot.exception import SkippedException
 from nonebot.log import logger
 from nonebot.plugin import PluginMetadata
@@ -109,6 +110,8 @@ class Hook:
 async def _() -> None:
     signal.signal(signal.SIGINT, Hook.sig_handle(signal.getsignal(signal.SIGINT)))
     signal.signal(signal.SIGTERM, Hook.sig_handle(signal.getsignal(signal.SIGTERM)))
+    if WINDOWS is True:
+        signal.signal(signal.SIGBREAK, Hook.sig_handle(signal.getsignal(signal.SIGBREAK)))
     logger.success('Signal hook installed')
 
 
