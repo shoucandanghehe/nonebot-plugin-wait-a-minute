@@ -3,7 +3,7 @@ name = 'nonebot-plugin-wait-a-minute'
 version = '0.2.1'
 description = 'A nonebot plugin for running some func before closing the bot'
 authors = [{ name = 'shoucandanghehe', email = 'wallfjjd@gmail.com' }]
-dependencies = ['nonebot2>=2.3.2']
+dependencies = ['nonebot2>=2.3.3']
 requires-python = '>=3.9'
 readme = 'README.md'
 license = { text = 'MIT' }
@@ -17,10 +17,11 @@ distribution = true
 
 [tool.pdm.dev-dependencies]
 dev = [
-    'nonebot2[all]>=2.3.2',
-    'ruff>=0.6.1',
-    'mypy>=1.11.1',
-    "nonebot-adapter-onebot>=2.4.4",
+    'nonebot2[all]>=2.3.3',
+    'ruff>=0.6.8',
+    'mypy>=1.11.2',
+    "nonebot-adapter-onebot>=2.4.5",
+    "nonebot-adapter-qq>=1.5.2",
 ]
 
 [tool.ruff]
