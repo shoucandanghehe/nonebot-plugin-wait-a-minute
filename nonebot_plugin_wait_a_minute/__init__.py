@@ -13,7 +13,7 @@ from nonebot.utils import is_coroutine_callable, run_sync
 from typing_extensions import TypeAlias
 
 __plugin_meta__ = PluginMetadata(
-    name='nonebot-plugin-wait-a-minute',
+    name='Wait a minute',
     description='A nonebot plugin for waiting for an event to complete before closing it',
     usage='@on_shutdown_before',
     type='library',
