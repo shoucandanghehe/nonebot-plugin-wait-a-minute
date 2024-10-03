@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import signal
-from asyncio import Task, gather, get_event_loop
+from asyncio import Task, create_task, gather, get_event_loop
 from enum import Enum, auto
+from functools import wraps
 from types import FrameType
-from typing import Any, Callable, ClassVar, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Optional, TypeVar
 
 from nonebot import get_driver
+from nonebot.exception import SkippedException
 from nonebot.log import logger
 from nonebot.plugin import PluginMetadata
 from nonebot.utils import is_coroutine_callable, run_sync
-from typing_extensions import TypeAlias
+from typing_extensions import ParamSpec, TypeAlias
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine
 
 __plugin_meta__ = PluginMetadata(
     name='Wait a minute',
@@ -23,6 +28,7 @@ __plugin_meta__ = PluginMetadata(
 )
 
 T = TypeVar('T')
+P = ParamSpec('P')
 
 SigHandleFunc: TypeAlias = Callable[[int, Optional[FrameType]], Any]
 
@@ -47,9 +53,27 @@ class Hook:
         return func
 
     @classmethod
+    def graceful(
+        cls, *, block: bool = False
+    ) -> Callable[[Callable[P, Coroutine[Any, Any, T]]], Callable[P, Coroutine[Any, Any, T]]]:
+        def decorator(func: Callable[P, Coroutine[Any, Any, T]]) -> Callable[P, Coroutine[Any, Any, T]]:
+            @wraps(func)
+            async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                if cls.status == Status.RUNNING and block is True:
+                    logger.warning('block is True, so this handle will be skipped')
+                    raise SkippedException
+                cls.tasks.append(task := create_task(func(*args, **kwargs)))
+                task.add_done_callback(lambda _: cls.tasks.remove(task))
+                return await task
+
+            return wrapper
+
+        return decorator
+
+    @classmethod
     def sig_handle(cls, original_handle: signal._HANDLER) -> SigHandleFunc:
         def inner(signum: int, frame: FrameType | None) -> None:  # noqa: ARG001
-            if not cls.funcs:
+            if not cls.funcs and not cls.tasks:
                 cls.status = Status.FINISHED
 
             if cls.status == Status.NOT_RUNNING_YET:
@@ -71,8 +95,12 @@ class Hook:
 
     @classmethod
     async def check_task(cls, signum: int) -> None:
-        if cls.tasks:
-            await gather(*cls.tasks)
+        while True:
+            if cls.tasks:
+                await gather(*cls.tasks)
+                cls.tasks = [i for i in cls.tasks if not i.done()]
+            else:
+                break
         cls.status = Status.FINISHED
         signal.raise_signal(signum)
 
@@ -85,5 +113,6 @@ async def _() -> None:
 
 
 on_shutdown_before = Hook.register
+graceful = Hook.graceful
 
-__all__ = ['on_shutdown_before']
+__all__ = ['on_shutdown_before', 'graceful']
