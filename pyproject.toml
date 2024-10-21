@@ -22,6 +22,7 @@ dev = [
     'mypy>=1.11.2',
     "nonebot-adapter-onebot>=2.4.5",
     "nonebot-adapter-qq>=1.5.2",
+    "basedpyright>=1.19.0",
 ]
 
 [tool.ruff]
@@ -97,6 +98,12 @@ builtins-ignorelist = ['id']
 
 [tool.ruff.format]
 quote-style = 'single'
+
+[tool.basedpyright]
+pythonVersion = "3.9"
+pythonPlatform = "All"
+defineConstant = { PYDANTIC_V2 = true }
+typeCheckingMode = "standard"
 
 [tool.nonebot]
 plugins = ['nonebot_plugin_wait_a_minute']
