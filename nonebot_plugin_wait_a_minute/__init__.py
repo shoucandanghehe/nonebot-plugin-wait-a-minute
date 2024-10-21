@@ -11,9 +11,13 @@ from nonebot import get_driver
 from nonebot.consts import WINDOWS
 from nonebot.exception import SkippedException
 from nonebot.log import logger
+from nonebot.matcher import Matcher  # noqa: TCH002 # NoneBot Dependency Injection Require
+from nonebot.message import run_preprocessor
 from nonebot.plugin import PluginMetadata
 from nonebot.utils import is_coroutine_callable, run_sync
 from typing_extensions import ParamSpec, TypeAlias
+
+from .config import Config, config
 
 if TYPE_CHECKING:
     from collections.abc import Coroutine
@@ -24,7 +28,7 @@ __plugin_meta__ = PluginMetadata(
     usage='@on_shutdown_before',
     type='library',
     homepage='https://github.com/shoucandanghehe/nonebot-plugin-wait-a-minute',
-    config=None,
+    config=Config,
     supported_adapters=None,
 )
 
@@ -67,6 +71,7 @@ class Hook:
                 task.add_done_callback(lambda _: cls.tasks.remove(task))
                 return await task
 
+            wrapper.__setattr__('__graceful_hook__', True)
             return wrapper
 
         return decorator
@@ -113,6 +118,16 @@ async def _() -> None:
     if WINDOWS is True:
         signal.signal(signal.SIGBREAK, Hook.sig_handle(signal.getsignal(signal.SIGBREAK)))
     logger.success('Signal hook installed')
+
+
+if config.wait.block_other:
+
+    @run_preprocessor
+    async def _(matcher: Matcher):
+        if Hook.status in {Status.RUNNING, Status.FINISHED}:
+            matcher.remain_handlers = [
+                i for i in matcher.remain_handlers if getattr(i.call, '__graceful_hook__', False)
+            ]
 
 
 on_shutdown_before = Hook.register
