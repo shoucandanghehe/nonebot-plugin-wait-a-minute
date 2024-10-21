@@ -18,8 +18,8 @@ distribution = true
 [tool.pdm.dev-dependencies]
 dev = [
     'nonebot2[all]>=2.3.3',
-    'ruff>=0.6.8',
-    'mypy>=1.11.2',
+    'ruff>=0.7.0',
+    'mypy>=1.12.1',
     "nonebot-adapter-onebot>=2.4.5",
     "nonebot-adapter-qq>=1.5.2",
     "basedpyright>=1.19.0",
