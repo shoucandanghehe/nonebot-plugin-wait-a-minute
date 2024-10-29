@@ -1,7 +1,21 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    "gitmoji"
-  ]
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "labels": ["dependencies"],
+    "dependencyDashboardTitle": "📌 Dependency Dashboard",
+    "dependencyDashboardLabels": ["dependencies"],
+    "commitMessagePrefix": "⬆️",
+    "commitMessageAction": "Upgrade",
+    "packageRules": [
+        {
+            "matchUpdateTypes": "pin",
+            "commitMessagePrefix": "📌",
+            "commitMessageAction": "Pin"
+        },
+        {
+            "matchUpdateTypes": "rollback",
+            "commitMessagePrefix": "⬇️",
+            "commitMessageAction": "Downgrade"
+        }
+    ],
+    "extends": ["config:recommended"]
 }
