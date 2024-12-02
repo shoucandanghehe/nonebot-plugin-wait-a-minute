@@ -11,7 +11,7 @@ from nonebot import get_driver
 from nonebot.consts import WINDOWS
 from nonebot.exception import SkippedException
 from nonebot.log import logger
-from nonebot.matcher import Matcher  # noqa: TCH002 # NoneBot Dependency Injection Require
+from nonebot.matcher import Matcher  # noqa: TC002 # NoneBot Dependency Injection Require
 from nonebot.message import run_preprocessor
 from nonebot.plugin import PluginMetadata
 from nonebot.utils import is_coroutine_callable, run_sync
@@ -133,4 +133,4 @@ if config.wait.block_other:
 on_shutdown_before = Hook.register
 graceful = Hook.graceful
 
-__all__ = ['on_shutdown_before', 'graceful']
+__all__ = ['graceful', 'on_shutdown_before']
