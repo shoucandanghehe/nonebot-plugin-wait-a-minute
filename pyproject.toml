@@ -3,26 +3,27 @@ name = 'nonebot-plugin-wait-a-minute'
 version = '0.4.0'
 description = 'A nonebot plugin for running some func before closing the bot'
 authors = [{ name = 'shoucandanghehe', email = 'wallfjjd@gmail.com' }]
-dependencies = ['nonebot2>=2.3.3']
+dependencies = ['nonebot2>=2.4.4']
 requires-python = '>=3.10'
 readme = 'README.md'
 license = { text = 'MIT' }
 
 [build-system]
-requires = ['pdm-backend']
-build-backend = 'pdm.backend'
+requires = ['uv_build>=0.10.6,<0.11.0']
+build-backend = 'uv_build'
 
-[tool.pdm]
-distribution = true
+[tool.uv.build-backend]
+module-name = 'nonebot_plugin_wait_a_minute'
+module-root = ''
 
-[tool.pdm.dev-dependencies]
+[dependency-groups]
 dev = [
-    'nonebot2[all]>=2.3.3',
-    'ruff>=0.7.0',
-    'mypy>=1.12.1',
-    "nonebot-adapter-onebot>=2.4.5",
-    "nonebot-adapter-qq>=1.5.2",
-    "basedpyright>=1.19.0",
+    'nonebot2[all]>=2.4.4',
+    'ruff>=0.15.7',
+    'mypy>=1.19.1',
+    'nonebot-adapter-onebot>=2.4.6',
+    'nonebot-adapter-qq>=1.6.7',
+    'basedpyright>=1.38.3',
 ]
 
 [tool.ruff]
@@ -64,7 +65,7 @@ select = [
     'SLOT',  # flake8-slots
     'SIM',   # flake8-simplify
     'TID',   # flake8-tidy-imports
-    'TCH',   # flake8-type-checking
+    'TC',    # flake8-type-checking
     'ARG',   # flake8-unused-arguments
     'PTH',   # flake8-use-pathlib
     'ERA',   # eradicate
@@ -80,15 +81,18 @@ select = [
 ]
 ignore = [
     'E501',   # 过长的行由 ruff format 处理, 剩余的都是字符串
-    'ANN101', # 由 type checker 自动推断
-    'ANN102', # 由 type checker 自动推断
     'ANN202', # 向 NoneBot 注册的函数
     'TRY003',
     'COM812', # 强制尾随逗号
     'TID252', # 相对导入
     'ISC001', # format warning
+    'RUF002', # docstring 中的全角标点
+    'RUF003', # 注释中的全角标点
 ]
-flake8-quotes = { inline-quotes = 'single', multiline-quotes = 'double' }
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = 'single'
+multiline-quotes = 'double'
 
 [tool.ruff.lint.flake8-annotations]
 mypy-init-return = true
@@ -100,10 +104,10 @@ builtins-ignorelist = ['id']
 quote-style = 'single'
 
 [tool.basedpyright]
-pythonVersion = "3.10"
-pythonPlatform = "All"
+pythonVersion = '3.10'
+pythonPlatform = 'All'
 defineConstant = { PYDANTIC_V2 = true }
-typeCheckingMode = "standard"
+typeCheckingMode = 'standard'
 
 [tool.nonebot]
 plugins = ['nonebot_plugin_wait_a_minute']
