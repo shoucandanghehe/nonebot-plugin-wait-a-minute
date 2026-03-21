@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import signal
 from asyncio import Task, create_task, gather, get_event_loop
+from collections.abc import Callable
 from enum import Enum, auto
 from functools import wraps
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
 from nonebot import get_driver
 from nonebot.consts import WINDOWS
@@ -15,7 +16,7 @@ from nonebot.matcher import Matcher  # noqa: TC002 # NoneBot Dependency Injectio
 from nonebot.message import run_preprocessor
 from nonebot.plugin import PluginMetadata
 from nonebot.utils import is_coroutine_callable, run_sync
-from typing_extensions import ParamSpec, TypeAlias
+from typing_extensions import ParamSpec
 
 from .config import Config, config
 
@@ -35,7 +36,7 @@ __plugin_meta__ = PluginMetadata(
 T = TypeVar('T')
 P = ParamSpec('P')
 
-SigHandleFunc: TypeAlias = Callable[[int, Optional[FrameType]], Any]
+SigHandleFunc: TypeAlias = Callable[[int, FrameType | None], Any]
 
 driver = get_driver()
 
