@@ -1266,7 +1266,7 @@ wheels = [
 
 [[package]]
 name = "nonebot-plugin-wait-a-minute"
-version = "0.4.0"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "nonebot2" },
