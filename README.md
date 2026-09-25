@@ -52,9 +52,10 @@ poetry add nonebot-plugin-wait-a-minute
 from nonebot import require, on_command
 from nonebot.matcher import Matcher
 
-require('nonebot_plugin_wait_a_minute') # require plugin
+require('nonebot_plugin_wait_a_minute')  # require plugin
 
 from nonebot_plugin_wait_a_minute import graceful, on_shutdown_before
+
 
 # 优雅关机
 @on_command('foo').handle()
@@ -63,11 +64,13 @@ from nonebot_plugin_wait_a_minute import graceful, on_shutdown_before
 async def _(matcher: Matcher):
     matcher.send('foo')
 
+
 # 关机前 hook
 @on_shutdown_before
 def _():
     # 整点啥()
     ...
+
 
 # 或者使用 async
 @on_shutdown_before
