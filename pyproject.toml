@@ -24,6 +24,8 @@ dev = [
     'nonebot-adapter-onebot>=2.4.6',
     'nonebot-adapter-qq>=1.6.7',
     'basedpyright>=1.38.3',
+    'nonebug>=0.4.4',
+    'pytest-asyncio>=1.0',
 ]
 
 [tool.ruff]
@@ -111,3 +113,10 @@ typeCheckingMode = 'standard'
 
 [tool.nonebot]
 plugins = ['nonebot_plugin_wait_a_minute']
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+asyncio_default_fixture_loop_scope = 'session'
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ['S101']
