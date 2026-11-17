@@ -7,17 +7,12 @@ from enum import Enum, auto
 from functools import wraps
 from types import FrameType
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
-from weakref import WeakSet
 
 from nonebot import get_driver
 from nonebot.consts import WINDOWS
-from nonebot.exception import FinishedException, PausedException, RejectedException, SkippedException, StopPropagation
+from nonebot.exception import MatcherException, ProcessException, SkippedException
 from nonebot.log import logger
-from nonebot.matcher import (  # NoneBot Dependency Injection Require
-    Matcher,
-    current_handler,
-    current_matcher,
-)
+from nonebot.matcher import Matcher  # noqa: TC002 # NoneBot Dependency Injection Require
 from nonebot.message import run_preprocessor
 from nonebot.plugin import PluginMetadata
 from nonebot.utils import is_coroutine_callable, run_sync
@@ -56,7 +51,6 @@ class Hook:
     status: Status = Status.NOT_RUNNING_YET
     funcs: ClassVar[list[Callable[[], Any]]] = []
     tasks: ClassVar[list[Task]] = []
-    matcher_tasks: ClassVar[WeakSet[Task]] = WeakSet()
     callback: Task | None = None
 
     @classmethod
@@ -75,9 +69,6 @@ class Hook:
                     logger.warning('block is True, so this handle will be skipped')
                     raise SkippedException
                 cls.tasks.append(task := create_task(func(*args, **kwargs)))
-                handler = current_handler.get(None)
-                if current_matcher.get(None) is not None and handler is not None and handler.call is wrapper:
-                    cls.matcher_tasks.add(task)
                 task.add_done_callback(lambda _: cls.tasks.remove(task))
                 return await task
 
@@ -119,10 +110,7 @@ class Hook:
                     if task.cancelled():
                         logger.warning('A graceful shutdown task was cancelled')
                     elif (exception := task.exception()) is not None:
-                        if task in cls.matcher_tasks and isinstance(
-                            exception,
-                            (FinishedException, PausedException, RejectedException, SkippedException, StopPropagation),
-                        ):
+                        if isinstance(exception, (MatcherException, ProcessException)):
                             continue
                         logger.opt(exception=exception).error('A graceful shutdown task failed')
                 cls.tasks = [i for i in cls.tasks if not i.done()]

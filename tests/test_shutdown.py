@@ -7,6 +7,7 @@ from nonebot.exception import (
     FinishedException,
     IgnoredException,
     MockApiException,
+    NetworkError,
     PausedException,
     RejectedException,
     SkippedException,
@@ -18,19 +19,20 @@ from nonebot.matcher import Matcher
 @pytest.mark.usefixtures('app')
 @pytest.mark.parametrize('matcher_task', [False, True])
 @pytest.mark.parametrize(
-    'exception',
+    'exception, logs_error',
     [
-        ValueError(),
-        FinishedException(),
-        PausedException(),
-        RejectedException(),
-        SkippedException(),
-        StopPropagation(),
-        IgnoredException('test'),
-        MockApiException(None),
+        (ValueError(), True),
+        (NetworkError('test'), True),
+        (FinishedException(), False),
+        (PausedException(), False),
+        (RejectedException(), False),
+        (SkippedException(), False),
+        (StopPropagation(), False),
+        (IgnoredException('test'), False),
+        (MockApiException(None), False),
     ],
 )
-async def test_shutdown_control_flow(*, exception: Exception, matcher_task: bool) -> None:
+async def test_shutdown_control_flow(*, exception: Exception, logs_error: bool, matcher_task: bool) -> None:
     plugin = importlib.import_module('nonebot_plugin_wait_a_minute')
     entered, release, failed = asyncio.Event(), asyncio.Event(), asyncio.Event()
     completed = []
@@ -67,7 +69,4 @@ async def test_shutdown_control_flow(*, exception: Exception, matcher_task: bool
         assert completed == ['work', 'signal']
         assert plugin.Hook.status == plugin.Status.FINISHED
         assert task.exception() is exception
-        is_control = isinstance(
-            exception, (FinishedException, PausedException, RejectedException, SkippedException, StopPropagation)
-        )
-        assert logger.opt.call_count == int(not (matcher_task and is_control))
+        assert logger.opt.call_count == int(logs_error)
