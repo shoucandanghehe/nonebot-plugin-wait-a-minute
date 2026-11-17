@@ -8,7 +8,7 @@
 
 ✨ 一个 NoneBot2 插件，让你可以在关机前执行一些操作 ✨
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
+![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
 ![PyPI - Version](https://img.shields.io/pypi/v/nonebot-plugin-wait-a-minute)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
