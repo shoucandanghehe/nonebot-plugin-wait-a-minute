@@ -4,7 +4,7 @@ version = '0.5.0'
 description = 'A nonebot plugin for running some func before closing the bot'
 authors = [{ name = 'shoucandanghehe', email = 'wallfjjd@gmail.com' }]
 dependencies = ['nonebot2>=2.4.4']
-requires-python = '>=3.10'
+requires-python = '>=3.11'
 readme = 'README.md'
 license = { text = 'MIT' }
 
@@ -30,7 +30,7 @@ dev = [
 
 [tool.ruff]
 line-length = 120
-target-version = 'py310'
+target-version = 'py311'
 
 [tool.ruff.lint]
 select = [
@@ -106,7 +106,7 @@ builtins-ignorelist = ['id']
 quote-style = 'single'
 
 [tool.basedpyright]
-pythonVersion = '3.10'
+pythonVersion = '3.11'
 pythonPlatform = 'All'
 defineConstant = { PYDANTIC_V2 = true }
 typeCheckingMode = 'standard'
