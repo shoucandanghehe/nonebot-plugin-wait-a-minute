@@ -104,7 +104,13 @@ class Hook:
     async def check_task(cls, signum: int) -> None:
         while True:
             if cls.tasks:
-                await gather(*cls.tasks)
+                tasks = cls.tasks.copy()
+                await gather(*tasks, return_exceptions=True)
+                for task in tasks:
+                    if task.cancelled():
+                        logger.warning('A graceful shutdown task was cancelled')
+                    elif (exception := task.exception()) is not None:
+                        logger.opt(exception=exception).error('A graceful shutdown task failed')
                 cls.tasks = [i for i in cls.tasks if not i.done()]
             else:
                 break
