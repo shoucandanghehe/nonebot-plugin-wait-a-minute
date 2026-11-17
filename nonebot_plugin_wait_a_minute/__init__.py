@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
 from nonebot import get_driver
 from nonebot.consts import WINDOWS
-from nonebot.exception import SkippedException
+from nonebot.exception import MatcherException, SkippedException
 from nonebot.log import logger
 from nonebot.matcher import Matcher  # noqa: TC002 # NoneBot Dependency Injection Require
 from nonebot.message import run_preprocessor
@@ -109,7 +109,7 @@ class Hook:
                 for task in tasks:
                     if task.cancelled():
                         logger.warning('A graceful shutdown task was cancelled')
-                    elif (exception := task.exception()) is not None:
+                    elif (exception := task.exception()) is not None and not isinstance(exception, MatcherException):
                         logger.opt(exception=exception).error('A graceful shutdown task failed')
                 cls.tasks = [i for i in cls.tasks if not i.done()]
             else:
