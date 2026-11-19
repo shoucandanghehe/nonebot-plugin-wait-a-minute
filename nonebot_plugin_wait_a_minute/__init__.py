@@ -7,7 +7,7 @@ from enum import Enum, auto
 from functools import wraps
 from inspect import isawaitable, iscoroutinefunction
 from types import FrameType
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol, TypeAlias, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, TypeAlias, TypeVar, overload
 
 from nonebot import get_driver
 from nonebot.consts import WINDOWS
@@ -69,19 +69,20 @@ class Hook:
 
     @classmethod
     def graceful(cls, *, block: bool = False) -> _GracefulDecorator:
-        def decorator(func: Callable[P, T | Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, T]]:
-            if is_coroutine_callable(func) or iscoroutinefunction(func):
-                invoke: Callable[P, Coroutine[Any, Any, T]] = cast('Callable[P, Coroutine[Any, Any, T]]', func)
-            else:
-                in_thread = run_sync(func)
+        @overload
+        def decorator(func: Callable[P, Awaitable[T]], /) -> Callable[P, Coroutine[Any, Any, T]]: ...
 
-                async def invoke_in_thread(*args: P.args, **kwargs: P.kwargs) -> T:
-                    result = await in_thread(*args, **kwargs)
-                    if isawaitable(result):
-                        return await result
-                    return result
+        @overload
+        def decorator(func: Callable[P, T], /) -> Callable[P, Coroutine[Any, Any, T]]: ...
 
-                invoke = invoke_in_thread
+        def decorator(func: Callable[P, T | Awaitable[T]], /) -> Callable[P, Coroutine[Any, Any, T]]:
+            in_thread = None if is_coroutine_callable(func) or iscoroutinefunction(func) else run_sync(func)
+
+            async def invoke(*args: P.args, **kwargs: P.kwargs) -> T:
+                result = func(*args, **kwargs) if in_thread is None else await in_thread(*args, **kwargs)
+                if isawaitable(result):
+                    return await result
+                return result
 
             @wraps(func)
             async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -95,8 +96,7 @@ class Hook:
             wrapper.__setattr__('__graceful_hook__', True)
             return wrapper
 
-        # The overloads describe how the wrapper unwraps awaitable results.
-        return cast('_GracefulDecorator', decorator)
+        return decorator
 
     @classmethod
     def sig_handle(cls, original_handle: signal._HANDLER) -> SigHandleFunc:
