@@ -79,6 +79,8 @@ async def _():
     ...
 ```
 
+`@graceful()` supports both `def` and `async def` handlers. Synchronous handlers run in the same worker pool NoneBot uses, without blocking the event loop.
+
 ## 📄 LICENSE
 
 This project is open-sourced under the [MIT](./LICENSE) license

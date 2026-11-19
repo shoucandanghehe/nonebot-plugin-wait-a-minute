@@ -5,6 +5,7 @@ from asyncio import Task, create_task, gather, get_event_loop
 from collections.abc import Callable
 from enum import Enum, auto
 from functools import wraps
+from inspect import isawaitable, iscoroutinefunction
 from types import FrameType
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
@@ -21,7 +22,7 @@ from typing_extensions import ParamSpec
 from .config import Config, config
 
 if TYPE_CHECKING:
-    from collections.abc import Coroutine
+    from collections.abc import Awaitable, Coroutine
 
 __plugin_meta__ = PluginMetadata(
     name='Wait a minute',
@@ -35,6 +36,7 @@ __plugin_meta__ = PluginMetadata(
 
 T = TypeVar('T')
 P = ParamSpec('P')
+
 
 SigHandleFunc: TypeAlias = Callable[[int, FrameType | None], Any]
 
@@ -61,14 +63,22 @@ class Hook:
     @classmethod
     def graceful(
         cls, *, block: bool = False
-    ) -> Callable[[Callable[P, Coroutine[Any, Any, T]]], Callable[P, Coroutine[Any, Any, T]]]:
-        def decorator(func: Callable[P, Coroutine[Any, Any, T]]) -> Callable[P, Coroutine[Any, Any, T]]:
+    ) -> Callable[[Callable[P, T | Awaitable[T]]], Callable[P, Coroutine[Any, Any, T]]]:
+        def decorator(func: Callable[P, T | Awaitable[T]], /) -> Callable[P, Coroutine[Any, Any, T]]:
+            in_thread = None if is_coroutine_callable(func) or iscoroutinefunction(func) else run_sync(func)
+
+            async def invoke(*args: P.args, **kwargs: P.kwargs) -> T:
+                result = func(*args, **kwargs) if in_thread is None else await in_thread(*args, **kwargs)
+                if isawaitable(result):
+                    return await result
+                return result
+
             @wraps(func)
             async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                 if cls.status == Status.RUNNING and block is True:
                     logger.warning('block is True, so this handle will be skipped')
                     raise SkippedException
-                cls.tasks.append(task := create_task(func(*args, **kwargs)))
+                cls.tasks.append(task := create_task(invoke(*args, **kwargs)))
                 task.add_done_callback(lambda _: cls.tasks.remove(task))
                 return await task
 
