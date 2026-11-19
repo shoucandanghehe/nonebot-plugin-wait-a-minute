@@ -5,8 +5,9 @@ from asyncio import Task, create_task, gather, get_event_loop
 from collections.abc import Callable
 from enum import Enum, auto
 from functools import wraps
+from inspect import isawaitable, iscoroutinefunction
 from types import FrameType
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, TypeAlias, TypeVar, cast, overload
 
 from nonebot import get_driver
 from nonebot.consts import WINDOWS
@@ -21,7 +22,7 @@ from typing_extensions import ParamSpec
 from .config import Config, config
 
 if TYPE_CHECKING:
-    from collections.abc import Coroutine
+    from collections.abc import Awaitable, Coroutine
 
 __plugin_meta__ = PluginMetadata(
     name='Wait a minute',
@@ -35,6 +36,14 @@ __plugin_meta__ = PluginMetadata(
 
 T = TypeVar('T')
 P = ParamSpec('P')
+
+
+class _GracefulDecorator(Protocol):
+    @overload
+    def __call__(self, func: Callable[P, Awaitable[T]], /) -> Callable[P, Coroutine[Any, Any, T]]: ...
+    @overload
+    def __call__(self, func: Callable[P, T], /) -> Callable[P, Coroutine[Any, Any, T]]: ...
+
 
 SigHandleFunc: TypeAlias = Callable[[int, FrameType | None], Any]
 
@@ -59,23 +68,35 @@ class Hook:
         return func
 
     @classmethod
-    def graceful(
-        cls, *, block: bool = False
-    ) -> Callable[[Callable[P, Coroutine[Any, Any, T]]], Callable[P, Coroutine[Any, Any, T]]]:
-        def decorator(func: Callable[P, Coroutine[Any, Any, T]]) -> Callable[P, Coroutine[Any, Any, T]]:
+    def graceful(cls, *, block: bool = False) -> _GracefulDecorator:
+        def decorator(func: Callable[P, T | Awaitable[T]]) -> Callable[P, Coroutine[Any, Any, T]]:
+            if is_coroutine_callable(func) or iscoroutinefunction(func):
+                invoke: Callable[P, Coroutine[Any, Any, T]] = cast('Callable[P, Coroutine[Any, Any, T]]', func)
+            else:
+                in_thread = run_sync(func)
+
+                async def invoke_in_thread(*args: P.args, **kwargs: P.kwargs) -> T:
+                    result = await in_thread(*args, **kwargs)
+                    if isawaitable(result):
+                        return await result
+                    return result
+
+                invoke = invoke_in_thread
+
             @wraps(func)
             async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                 if cls.status == Status.RUNNING and block is True:
                     logger.warning('block is True, so this handle will be skipped')
                     raise SkippedException
-                cls.tasks.append(task := create_task(func(*args, **kwargs)))
+                cls.tasks.append(task := create_task(invoke(*args, **kwargs)))
                 task.add_done_callback(lambda _: cls.tasks.remove(task))
                 return await task
 
             wrapper.__setattr__('__graceful_hook__', True)
             return wrapper
 
-        return decorator
+        # The overloads describe how the wrapper unwraps awaitable results.
+        return cast('_GracefulDecorator', decorator)
 
     @classmethod
     def sig_handle(cls, original_handle: signal._HANDLER) -> SigHandleFunc:

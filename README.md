@@ -79,6 +79,8 @@ async def _():
     ...
 ```
 
+`@graceful()` 支持 `def` 和 `async def` 处理器。同步处理器使用 NoneBot 的线程池执行，不阻塞事件循环。
+
 ## 📄 LICENSE
 
 本项目使用 [MIT](./LICENSE) 许可证开源
