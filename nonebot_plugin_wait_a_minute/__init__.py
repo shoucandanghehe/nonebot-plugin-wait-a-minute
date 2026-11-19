@@ -7,7 +7,7 @@ from enum import Enum, auto
 from functools import wraps
 from inspect import isawaitable, iscoroutinefunction
 from types import FrameType
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol, TypeAlias, TypeVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
 from nonebot import get_driver
 from nonebot.consts import WINDOWS
@@ -38,13 +38,6 @@ T = TypeVar('T')
 P = ParamSpec('P')
 
 
-class _GracefulDecorator(Protocol):
-    @overload
-    def __call__(self, func: Callable[P, Awaitable[T]], /) -> Callable[P, Coroutine[Any, Any, T]]: ...
-    @overload
-    def __call__(self, func: Callable[P, T], /) -> Callable[P, Coroutine[Any, Any, T]]: ...
-
-
 SigHandleFunc: TypeAlias = Callable[[int, FrameType | None], Any]
 
 driver = get_driver()
@@ -68,13 +61,9 @@ class Hook:
         return func
 
     @classmethod
-    def graceful(cls, *, block: bool = False) -> _GracefulDecorator:
-        @overload
-        def decorator(func: Callable[P, Awaitable[T]], /) -> Callable[P, Coroutine[Any, Any, T]]: ...
-
-        @overload
-        def decorator(func: Callable[P, T], /) -> Callable[P, Coroutine[Any, Any, T]]: ...
-
+    def graceful(
+        cls, *, block: bool = False
+    ) -> Callable[[Callable[P, T | Awaitable[T]]], Callable[P, Coroutine[Any, Any, T]]]:
         def decorator(func: Callable[P, T | Awaitable[T]], /) -> Callable[P, Coroutine[Any, Any, T]]:
             in_thread = None if is_coroutine_callable(func) or iscoroutinefunction(func) else run_sync(func)
 
