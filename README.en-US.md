@@ -59,7 +59,7 @@ from nonebot_plugin_wait_a_minute import graceful, on_shutdown_before
 
 # Graceful shutdown
 @on_command('foo').handle()
-@graceful()  # 👈 Add graceful decorator below the handle decorator
+@graceful()  # 👈 Add below the handle decorator; works with def and async def
 # Or, you can use @graceful(block=True) to prevent new handles from running during shutdown wait
 async def _(matcher: Matcher):
     matcher.send('foo')
@@ -78,8 +78,6 @@ async def _():
     # await Do something()
     ...
 ```
-
-`@graceful()` supports both `def` and `async def` handlers. Synchronous handlers run in the same worker pool NoneBot uses, without blocking the event loop.
 
 ## 📄 LICENSE
 
