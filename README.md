@@ -59,7 +59,7 @@ from nonebot_plugin_wait_a_minute import graceful, on_shutdown_before
 
 # 优雅关机
 @on_command('foo').handle()
-@graceful()  # 👈 添加 graceful 装饰器到 handle 装饰器下面
+@graceful()  # 👈 加在 handle 装饰器下面，def 和 async def 都可以
 # 或者，你可以使用 @graceful(block=True) 来阻止进入关机等待时运行新的 handle
 async def _(matcher: Matcher):
     matcher.send('foo')
